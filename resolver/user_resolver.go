@@ -45,3 +45,13 @@ func (r *userResolver) Roles() *[]*roleResolver {
 	}
 	return &l
 }
+
+func (r *userResolver) Students() *[]*studentResolver {
+	l := make([]*studentResolver, len(r.u.Students))
+	for i := range l {
+		l[i] = &studentResolver{
+			s: r.u.Students[i],
+		}
+	}
+	return &l
+}

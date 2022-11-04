@@ -5,4 +5,5 @@ type User {
     ipAddress: String
     createdAt: Time
     roles: [Role]
+    students: [Student]
 }

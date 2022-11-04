@@ -25,7 +25,6 @@ func main() {
 	ctx := context.Background()
 	log := service.NewLogger(config)
 	roleService := service.NewRoleService(db, log)
-	userService := service.NewUserService(db, roleService, log)
 	authService := service.NewAuthService(config, log)
 	studentService := service.NewStudentService(db, log)
 	schoolService := service.NewSchoolService(db, log)
@@ -33,6 +32,7 @@ func main() {
 	caseService := service.NewCaseService(db, log)
 	surveyService := service.NewSurveyService(db, caseService, log)
 	reportService := service.NewReportService(db, log)
+	userService := service.NewUserService(db, roleService, studentService, log)
 
 	ctx = context.WithValue(ctx, "config", config)
 	ctx = context.WithValue(ctx, "log", log)

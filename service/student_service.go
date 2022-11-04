@@ -37,6 +37,24 @@ func (s *StudentService) FindByID(id string) (*model.Student, error) {
 	return student, nil
 }
 
+func (s *StudentService) FindByUserId(userId *string) ([]*model.Student, error) {
+	students := make([]*model.Student, 0)
+
+	studentSQL := `SELECT stu.*
+	FROM students stu
+	INNER JOIN rel_users_students us ON stu.id = us.student_id
+	WHERE us.user_id = ? `
+
+	err := s.db.Select(&students, studentSQL, userId)
+	if err == sql.ErrNoRows {
+		return students, nil
+	}
+	if err != nil {
+		return students, err
+	}
+	return students, nil
+}
+
 func (s *StudentService) FindBySchoolID(schoolID *string, keyword *string) (students []*model.Student, err error) {
 	if keyword != nil {
 		strKeyword := fmt.Sprintf("%s%s%s", "%", *keyword, "%")

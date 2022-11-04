@@ -16,13 +16,14 @@ const (
 )
 
 type UserService struct {
-	db          *sqlx.DB
-	roleService *RoleService
-	log         *logging.Logger
+	db              *sqlx.DB
+	roleService     *RoleService
+	studentsService *StudentService
+	log             *logging.Logger
 }
 
-func NewUserService(db *sqlx.DB, roleService *RoleService, log *logging.Logger) *UserService {
-	return &UserService{db: db, roleService: roleService, log: log}
+func NewUserService(db *sqlx.DB, roleService *RoleService, studentsService *StudentService, log *logging.Logger) *UserService {
+	return &UserService{db: db, roleService: roleService, studentsService: studentsService, log: log}
 }
 
 func (u *UserService) FindByEmail(email string) (*model.User, error) {
@@ -46,6 +47,46 @@ func (u *UserService) FindByEmail(email string) (*model.User, error) {
 		return nil, err
 	}
 	user.Roles = roles
+
+	students, err := u.studentsService.FindByUserId(&user.ID)
+	if err != nil {
+		u.log.Errorf("Error in retrieving roles : %v", err)
+		return nil, err
+	}
+	user.Students = students
+
+	return user, nil
+}
+
+func (u *UserService) FindUserById(userId string) (*model.User, error) {
+	user := &model.User{}
+
+	userSQL := `SELECT * FROM users WHERE id = ?`
+	udb := u.db.Unsafe()
+	row := udb.QueryRowx(userSQL, userId)
+	err := row.StructScan(user)
+	if err == sql.ErrNoRows {
+		return user, nil
+	}
+	if err != nil {
+		u.log.Errorf("Error in retrieving user : %v", err)
+		return nil, err
+	}
+
+	roles, err := u.roleService.FindByUserId(&user.ID)
+	if err != nil {
+		u.log.Errorf("Error in retrieving roles : %v", err)
+		return nil, err
+	}
+	user.Roles = roles
+
+	students, err := u.studentsService.FindByUserId(&user.ID)
+	if err != nil {
+		u.log.Errorf("Error in retrieving roles : %v", err)
+		return nil, err
+	}
+	user.Students = students
+
 	return user, nil
 }
 
@@ -79,6 +120,26 @@ func (u *UserService) CreateUser(user *model.User) (*model.User, error) {
 
 	if _, err := u.db.Exec(roleSQL, userResult.ID, roleResult.ID); err != nil {
 		u.log.Errorf("Error in creating role user relation : %v", err)
+		return nil, err
+	}
+
+	return userResult, nil
+}
+
+func (u *UserService) CreateUserStudentRelation(relations *model.UsersStudentsRelations) (*model.User, error) {
+	userID := uuid.NewV4()
+	newID := userID.String()
+
+	userSQL := `INSERT INTO rel_users_students (id, user_id, student_id) VALUES (?, ?, ?)`
+
+	if _, err := u.db.Exec(userSQL, newID, relations.UserId, relations.StudentId); err != nil {
+		u.log.Errorf("Error in creating role user relation : %v", err)
+		return nil, err
+	}
+
+	userResult, err := u.FindUserById(relations.UserId)
+	if err != nil {
+		u.log.Errorf("Error in retrieving user : %v", err)
 		return nil, err
 	}
 
