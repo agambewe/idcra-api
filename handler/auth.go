@@ -89,6 +89,17 @@ func Login() http.Handler {
 			return
 		}
 
+		role, err := ctx.Value("userService").(*service.UserService).FindUserRole(&user.ID)
+		if err != nil {
+			response := &model.Response{
+				Code:  http.StatusInternalServerError,
+				Error: err.Error(),
+			}
+			loginResponse.Response = response
+			writeResponse(w, loginResponse, loginResponse.Code)
+			return
+		}
+
 		tokenString, err := ctx.Value("authService").(*service.AuthService).SignJWT(user)
 		if err != nil {
 			response := &model.Response{
@@ -105,6 +116,8 @@ func Login() http.Handler {
 		}
 		loginResponse.Response = response
 		loginResponse.AccessToken = *tokenString
+		loginResponse.Role = *role
+
 		writeResponse(w, loginResponse, loginResponse.Code)
 	})
 }

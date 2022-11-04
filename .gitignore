@@ -17,3 +17,4 @@ schema/bindata.go
 
 # Ignore coverage reports
 .cover
+.idea

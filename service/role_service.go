@@ -33,3 +33,53 @@ func (r *RoleService) FindByUserId(userId *string) ([]*model.Role, error) {
 	}
 	return roles, nil
 }
+
+func (r *RoleService) FindRoleIdByName(roleName string) (*model.Role, error) {
+	role := &model.Role{}
+
+	roleSQL := `SELECT * FROM roles where name = ?`
+	udb := r.db.Unsafe()
+	row := udb.QueryRowx(roleSQL, roleName)
+	err := row.StructScan(role)
+	if err == sql.ErrNoRows {
+		return role, nil
+	}
+	if err != nil {
+		r.log.Errorf("Error in retrieving role : %v", err)
+		return nil, err
+	}
+
+	if err == sql.ErrNoRows {
+		return role, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+func (r *RoleService) FindRoleId(roleId *string) (*model.Role, error) {
+	role := &model.Role{}
+
+	roleSQL := `SELECT * FROM roles where id = ?`
+	udb := r.db.Unsafe()
+	row := udb.QueryRowx(roleSQL, roleId)
+	err := row.StructScan(role)
+	if err == sql.ErrNoRows {
+		return role, nil
+	}
+	if err != nil {
+		r.log.Errorf("Error in retrieving role name: %v", err)
+		return nil, err
+	}
+
+	if err == sql.ErrNoRows {
+		return role, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}

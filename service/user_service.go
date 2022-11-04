@@ -59,10 +59,54 @@ func (u *UserService) CreateUser(user *model.User) (*model.User, error) {
 	}
 
 	if _, err := u.db.NamedExec(userSQL, user); err != nil {
+		u.log.Errorf("Error in creating user : %v", err)
 		return nil, err
 	}
 
-	return u.FindByEmail(user.Email)
+	userResult, err := u.FindByEmail(user.Email)
+	if err != nil {
+		u.log.Errorf("Error in retrieving user : %v", err)
+		return nil, err
+	}
+
+	roleResult, err := u.roleService.FindRoleIdByName("PARENT")
+	if err != nil {
+		u.log.Errorf("Error in retrieving role : %v", err)
+		return nil, err
+	}
+
+	roleSQL := `INSERT INTO rel_users_roles (user_id, role_id) VALUES (?,?)`
+
+	if _, err := u.db.Exec(roleSQL, userResult.ID, roleResult.ID); err != nil {
+		u.log.Errorf("Error in creating role user relation : %v", err)
+		return nil, err
+	}
+
+	return userResult, nil
+}
+
+func (u *UserService) FindUserRole(userId *string) (*string, error) {
+	user := &model.UsersRolesRelations{}
+
+	userSQL := `SELECT * FROM rel_users_roles WHERE user_id = ?`
+	udb := u.db.Unsafe()
+	row := udb.QueryRowx(userSQL, userId)
+	err := row.StructScan(user)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		u.log.Errorf("Error in retrieving user role : %v", err)
+		return nil, err
+	}
+
+	roleResult, err := u.roleService.FindRoleId(&user.RoleId)
+	if err != nil {
+		u.log.Errorf("Error in retrieving role : %v", err)
+		return nil, err
+	}
+
+	return &roleResult.Name, nil
 }
 
 func (u *UserService) List(first *int32, after *string) ([]*model.User, error) {
