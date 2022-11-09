@@ -133,7 +133,25 @@ func (u *UserService) CreateUserStudentRelation(relations *model.UsersStudentsRe
 	userSQL := `INSERT INTO rel_users_students (id, user_id, student_id) VALUES (?, ?, ?)`
 
 	if _, err := u.db.Exec(userSQL, newID, relations.UserId, relations.StudentId); err != nil {
-		u.log.Errorf("Error in creating role user relation : %v", err)
+		u.log.Errorf("Error in adding student to user : %v", err)
+		return nil, err
+	}
+
+	userResult, err := u.FindUserById(relations.UserId)
+	if err != nil {
+		u.log.Errorf("Error in retrieving user : %v", err)
+		return nil, err
+	}
+
+	return userResult, nil
+}
+
+func (u *UserService) DeleteStudentFromParent(relations *model.UsersStudentsRelations) (*model.User, error) {
+
+	userSQL := `DELETE FROM rel_users_students WHERE user_id = ? AND student_id = ?`
+
+	if _, err := u.db.Exec(userSQL, relations.UserId, relations.StudentId); err != nil {
+		u.log.Errorf("Error in deleting student from user : %v", err)
 		return nil, err
 	}
 

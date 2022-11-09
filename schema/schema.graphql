@@ -24,4 +24,5 @@ type Mutation {
     createStudent(name: String!, dateOfBirth: String!, schoolID: String!): Student
     createSurvey(survey: SurveyInput!): Survey!
     parentHasStudent(userId: String!, studentId: String!): User
+    removeStudentFromParent(userId: String!, studentId: String!): User
 }

@@ -43,3 +43,21 @@ func (r *Resolver) ParentHasStudent(ctx context.Context, args *struct {
 	ctx.Value("log").(*logging.Logger).Debugf("Created user : %v", *user)
 	return &userResolver{user}, nil
 }
+
+func (r *Resolver) RemoveStudentFromParent(ctx context.Context, args *struct {
+	UserId    string
+	StudentId string
+}) (*userResolver, error) {
+	userStudent := &model.UsersStudentsRelations{
+		UserId:    args.UserId,
+		StudentId: args.StudentId,
+	}
+
+	user, err := ctx.Value("userService").(*service.UserService).DeleteStudentFromParent(userStudent)
+	if err != nil {
+		ctx.Value("log").(*logging.Logger).Errorf("Graphql error : %v", err)
+		return nil, err
+	}
+	ctx.Value("log").(*logging.Logger).Debugf("Created user : %v", *user)
+	return &userResolver{user}, nil
+}
