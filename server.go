@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -55,10 +57,14 @@ func main() {
 	http.Handle("/query", h.AddContext(ctx, loggerHandler.Logging(h.Authenticate(&h.GraphQL{Schema: graphqlSchema, Loaders: loader.NewLoaderCollection()}))))
 
 	http.Handle("/reports/surveys/", h.AddContext(ctx, loggerHandler.Logging(h.Authenticate(h.SurveyReport()))))
+	http.Handle("/reports/school/", h.AddContext(ctx, loggerHandler.Logging(h.Authenticate(h.SchoolReport()))))
 
 	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "graphiql.html")
 	}))
 
-	log.Fatal(http.ListenAndServe(":3000", nil))
+	port := flag.String("port", "3001", "a port")
+	flag.Parse()
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", *port), nil))
 }

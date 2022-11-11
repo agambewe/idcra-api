@@ -1,9 +1,14 @@
 package service
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -63,6 +68,54 @@ func (s *ReportService) CostBreakdownBySchoolAndDateRange(schoolID string, start
 	results = append(results, summary)
 
 	return results, nil
+}
+
+func (s *ReportService) GenerateSchoolReport(schoolId string) (err error) {
+	models := []model.SchoolReports{}
+	reportSQL := `select s.id, students.name, s.date from students join surveys s on students.id = s.student_id where school_id = ?;`
+
+	err = s.db.Select(&models, reportSQL, schoolId)
+	if err != nil {
+		return err
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for _, val := range models {
+			id, err := uuid.FromString(val.ID)
+			if err != nil {
+				return
+			}
+
+			reportByte, err := s.GenerateSurveyPDF(id)
+			if err != nil {
+				return
+			}
+
+			err = os.Mkdir(fmt.Sprintf("./tmp/%s", val.Name), os.ModePerm)
+			f, err := os.Create(fmt.Sprintf("./tmp/%s/%s.pdf", val.Name, val.Date.Format("2006-01-02")))
+
+			defer f.Close()
+			if err != nil {
+				return
+			}
+
+			_, err = f.Write(reportByte.Bytes())
+			if err != nil {
+				return
+			}
+
+		}
+	}()
+
+	wg.Wait()
+
+	err = zipSource("./tmp/", "schoolreports.zip")
+	return err
 }
 
 func (s *ReportService) GenerateSurveyPDF(surveyID uuid.UUID) (reportData bytes.Buffer, err error) {
@@ -562,4 +615,60 @@ func getSCADMFChart(D, M, F float64) (chartAsBase64 string, err error) {
 	err = graph.Render(chart.PNG, buffer)
 	chartAsBase64 = base64.StdEncoding.EncodeToString(buffer.Bytes())
 	return
+}
+
+func zipSource(source, target string) error {
+	// 1. Create a ZIP file and zip.Writer
+	f, err := os.Create(target)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	writer := zip.NewWriter(f)
+	defer writer.Close()
+
+	// 2. Go through all the files of the source
+	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 3. Create a local file header
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+
+		// set compression
+		header.Method = zip.Deflate
+
+		// 4. Set relative path of a file as the header name
+		header.Name, err = filepath.Rel(filepath.Dir(source), path)
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			header.Name += "/"
+		}
+
+		// 5. Create writer for the file header and save content of the file
+		headerWriter, err := writer.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		_, err = io.Copy(headerWriter, f)
+		return err
+	})
 }
