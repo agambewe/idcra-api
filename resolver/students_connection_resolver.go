@@ -32,16 +32,22 @@ func (r *studentsConnectionResolver) PageInfo() *pageInfoResolver {
 	var startCursor graphql.ID
 	var endCursor graphql.ID
 
+	hasNext := false
+
 	if r.from != nil {
 		startCursor = service.EncodeCursor(r.from)
 	}
 
 	if r.to != nil {
 		endCursor = service.EncodeCursor(r.to)
+		hasNext = true
+	} else {
+		hasNext = false
 	}
+
 	return &pageInfoResolver{
 		startCursor: &startCursor,
 		endCursor:   &endCursor,
-		hasNextPage: false,
+		hasNextPage: hasNext,
 	}
 }
