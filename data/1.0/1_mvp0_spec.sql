@@ -163,3 +163,43 @@ CREATE TABLE IF NOT EXISTS `cases` (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8;
 -- ----------------------------------------------------------------------------
+
+-- User <--> Students relationship
+CREATE TABLE IF NOT EXISTS `rel_users_students` (
+  `id` VARCHAR(100) NOT NULL,
+  `user_id` VARCHAR(100) NOT NULL,
+  `student_id` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `rel_users_students_pk` (`student_id`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8;
+-- ----------------------------------------------------------------------------
+
+-- Users Telegram Table
+CREATE TABLE IF NOT EXISTS `users_telegram` (
+  `id` CHAR(36) NOT NULL,
+  `id_telegram` BIGINT NOT NULL,
+  `first_name` VARCHAR(100) NOT NULL,
+  `last_name` VARCHAR(100) NOT NULL,
+  `username` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `unique_index` (`id_telegram`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8;
+-- ----------------------------------------------------------------------------
+
+-- Users Telegram Records Table
+CREATE TABLE IF NOT EXISTS `users_telegram_records` (
+  `id` VARCHAR(100) NOT NULL,
+  `id_telegram` BIGINT NOT NULL,
+  `user_answer` TINYINT(1) NOT NULL,
+  `answer_type` VARCHAR(20) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (`id`),
+  KEY `users_telegram_records_users_telegram_null_fk` (`id_telegram`),
+  CONSTRAINT `users_telegram_records_users_telegram_null_fk` FOREIGN KEY (`id_telegram`) 
+    REFERENCES "users_telegram" ("id_telegram") 
+    ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8;
+-- ----------------------------------------------------------------------------
