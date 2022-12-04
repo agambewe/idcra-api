@@ -50,10 +50,13 @@ func SurveyReport() http.Handler {
 func SchoolReport() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// w.Header().Set("Content-type", "application/octet-stream")
-		w.Header().Set("Content-type", "application/zip")
+		w.Header().Set("Content-type", "application/json")
 
 		ctx := r.Context()
 		schoolId := strings.TrimPrefix(r.URL.Path, "/reports/school/")
+
+		os.RemoveAll("./reports/")
+		os.MkdirAll("./reports/", os.ModePerm)
 
 		err := ctx.Value("reportService").(*service.ReportService).GenerateSchoolReport(schoolId)
 		if err != nil {
@@ -75,27 +78,25 @@ func SchoolReport() http.Handler {
 			return
 		}
 
-		fileByte, err := DownloadZip()
-
+		err = os.Rename("./schoolreports.zip", fmt.Sprintf("./reports/%s.zip", school.Name))
 		if err != nil {
-			if err != nil {
-				response := &model.Response{
-					Code:  http.StatusInternalServerError,
-					Error: err.Error(),
-				}
-				writeResponse(w, response, response.Code)
-				return
+			response := &model.Response{
+				Code:  http.StatusInternalServerError,
+				Error: err.Error(),
 			}
+			writeResponse(w, response, response.Code)
+			return
 		}
 
-		reportBytes := bytes.NewReader(fileByte)
-		contentDisposition := fmt.Sprintf("attachment; filename=%s.zip", school.Name)
-		w.Header().Set("Content-Disposition", contentDisposition)
-
-		io.Copy(w, reportBytes)
 		os.RemoveAll("./tmp/")
 		os.MkdirAll("./tmp/", os.ModePerm)
-		os.Remove("schoolreports.zip")
+
+		response := &model.Response{
+			Code: http.StatusOK,
+		}
+
+		writeResponse(w, response, response.Code)
+		return
 	})
 }
 

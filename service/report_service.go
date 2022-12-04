@@ -148,9 +148,9 @@ func (s *ReportService) GenerateSurveyPDF(surveyID uuid.UUID) (reportData bytes.
 		return *bytes.NewBufferString(""), err
 	}
 
-	model := models[0]
-	model.Setup()
-	reportData, err = getReport(model)
+	modelReport := models[0]
+	modelReport.Setup()
+	reportData, err = getReport(modelReport)
 	return
 }
 
