@@ -58,6 +58,9 @@ func SchoolReport() http.Handler {
 		os.RemoveAll("./reports/")
 		os.MkdirAll("./reports/", os.ModePerm)
 
+		os.RemoveAll("./tmp/")
+		os.MkdirAll("./tmp/", os.ModePerm)
+
 		err := ctx.Value("reportService").(*service.ReportService).GenerateSchoolReport(schoolId)
 		if err != nil {
 			response := &model.Response{
