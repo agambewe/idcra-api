@@ -115,6 +115,10 @@ func (s *ReportService) GenerateSchoolReport(schoolId string) (err error) {
 	wg.Wait()
 
 	err = zipSource("./tmp/", "schoolreports.zip")
+
+	permission := os.FileMode(0755)
+	os.Chmod("./schoolreports.zip", permission)
+
 	return err
 }
 
