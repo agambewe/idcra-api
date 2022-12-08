@@ -57,6 +57,7 @@ func main() {
 	http.Handle("/query", h.AddContext(ctx, loggerHandler.Logging(h.Authenticate(&h.GraphQL{Schema: graphqlSchema, Loaders: loader.NewLoaderCollection()}))))
 
 	http.Handle("/reports/surveys/", h.AddContext(ctx, loggerHandler.Logging(h.Authenticate(h.SurveyReport()))))
+	http.Handle("/reports/surveys/school/", h.AddContext(ctx, loggerHandler.Logging(h.Authenticate(h.SurveyReportSchool()))))
 	http.Handle("/reports/school/", h.AddContext(ctx, loggerHandler.Logging(h.Authenticate(h.SchoolReport()))))
 
 	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

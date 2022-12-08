@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/base64"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"github.com/kerti/idcra-api/model"
 	"github.com/op/go-logging"
 	uuid "github.com/satori/go.uuid"
+	"github.com/tealeg/xlsx"
 	"github.com/wcharczuk/go-chart/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 )
@@ -152,6 +154,72 @@ func (s *ReportService) GenerateSurveyPDF(surveyID uuid.UUID) (reportData bytes.
 	model.Setup()
 	reportData, err = getReport(model)
 	return
+}
+
+func (s *ReportService) GenerateSurveyCSV(schoolId string) (err error) {
+	models := []model.SurveyReportCSV{}
+
+	reportSQL := `
+		select
+			student.name studentname, school.name schoolname,
+			s.s1q1,s.s1q2,s.s1q3,s.s1q4,s.s1q5,s.s1q6,s.s1q7,
+			s.s2q1,s.s2q2,s.s2q3,s.s2q4,s.s2q5,s.s2q6,s.s2q6,s.s2q7,s.s2q8,s.s2q9,
+			s.lower_d,s.lower_e,s.lower_f,
+			s.upper_d,s.upper_m,s.upper_f,
+			s.subjective_score,s.created_at
+		from
+			surveys s
+			left join students student
+				on s.student_id = student.id
+			left join schools school
+				on student.school_id = school.id
+		where
+			school.id = ?;`
+
+	err = s.db.Select(&models, reportSQL, schoolId)
+	if err != nil {
+		return err
+	}
+	println(fmt.Sprintf("MODEL: %v", models))
+
+	// Create a new CSV file
+	f, err := os.Create(fmt.Sprintf("./tmp/%s.csv", models[0].SchoolName))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Write the data to the file
+	w := csv.NewWriter(f)
+	var dataTemp [][]string
+
+	dataTemp = append(dataTemp, []string{
+		"student name",
+		"s1q1", "s1q2", "s1q3", "s1q4", "s1q5", "s1q6", "s1q7",
+		"s2q1", "s2q2", "s2q3", "s2q4", "s2q5", "s2q6", "s2q7", "s2q8", "s2q9",
+		"lower_d", "lower_e", "lower_f",
+		"upper_d", "upper_m", "upper_f",
+		"subjective score", "date of survey",
+	})
+
+	for _, v := range models {
+		dataTemp = append(dataTemp, []string{
+			v.StudentName,
+			v.S1Q1, v.S1Q2, v.S1Q3, v.S1Q4, v.S1Q5, v.S1Q6, v.S1Q7,
+			v.S2Q1, v.S2Q2, v.S2Q3, v.S2Q4, v.S2Q5, v.S2Q6, v.S2Q7, v.S2Q8, v.S2Q9,
+			v.LowerD, v.LowerE, v.LowerF,
+			v.UpperD, v.UpperM, v.UpperF,
+			v.SubjectiveScore, v.DateOfSurvey.Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	w.WriteAll(dataTemp)
+	w.Flush()
+
+	err = generateXLSXFromCSV(fmt.Sprintf("./tmp/%s.csv", models[0].SchoolName), fmt.Sprintf("./tmp/%s.xlsx", models[0].SchoolName), ",")
+
+	err = zipSource("./tmp/", "surveyreports.zip")
+	return err
 }
 
 func getReport(reportModel model.SurveyReport) (reportData bytes.Buffer, err error) {
@@ -671,4 +739,36 @@ func zipSource(source, target string) error {
 		_, err = io.Copy(headerWriter, f)
 		return err
 	})
+}
+
+func generateXLSXFromCSV(csvPath string, XLSXPath string, delimiter string) error {
+	csvFile, err := os.Open(csvPath)
+	if err != nil {
+		return err
+	}
+	defer csvFile.Close()
+	reader := csv.NewReader(csvFile)
+	if len(delimiter) > 0 {
+		reader.Comma = rune(delimiter[0])
+	} else {
+		reader.Comma = rune(',')
+	}
+	xlsxFile := xlsx.NewFile()
+	sheet, err := xlsxFile.AddSheet("sheet1")
+	if err != nil {
+		return err
+	}
+	fields, err := reader.Read()
+	for err == nil {
+		row := sheet.AddRow()
+		for _, field := range fields {
+			cell := row.AddCell()
+			cell.Value = field
+		}
+		fields, err = reader.Read()
+	}
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+	return xlsxFile.Save(XLSXPath)
 }

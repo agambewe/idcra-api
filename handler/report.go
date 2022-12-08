@@ -47,6 +47,59 @@ func SurveyReport() http.Handler {
 	})
 }
 
+func SurveyReportSchool() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// w.Header().Set("Content-type", "application/octet-stream")
+		w.Header().Set("Content-type", "application/zip")
+
+		ctx := r.Context()
+		idString := strings.TrimPrefix(r.URL.Path, "/reports/surveys/school/")
+
+		err := ctx.Value("reportService").(*service.ReportService).GenerateSurveyCSV(idString)
+		if err != nil {
+			response := &model.Response{
+				Code:  http.StatusInternalServerError,
+				Error: err.Error(),
+			}
+			writeResponse(w, response, response.Code)
+			return
+		}
+
+		school, err := ctx.Value("schoolService").(*service.SchoolService).FindByID(idString)
+		if err != nil {
+			response := &model.Response{
+				Code:  http.StatusInternalServerError,
+				Error: err.Error(),
+			}
+			writeResponse(w, response, response.Code)
+			return
+		}
+
+		fileByte, err := DownloadZip("./surveyreports.zip")
+
+		if err != nil {
+			if err != nil {
+				response := &model.Response{
+					Code:  http.StatusInternalServerError,
+					Error: err.Error(),
+				}
+				writeResponse(w, response, response.Code)
+				return
+			}
+		}
+
+		reportBytes := bytes.NewReader(fileByte)
+		contentDisposition := fmt.Sprintf("attachment; filename=%s.zip", school.Name)
+		w.Header().Set("Content-Disposition", contentDisposition)
+
+		io.Copy(w, reportBytes)
+		os.RemoveAll("./tmp/")
+		os.MkdirAll("./tmp/", os.ModePerm)
+		os.Remove("surveyreports.zip")
+
+	})
+}
+
 func SchoolReport() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// w.Header().Set("Content-type", "application/octet-stream")
@@ -75,7 +128,7 @@ func SchoolReport() http.Handler {
 			return
 		}
 
-		fileByte, err := DownloadZip()
+		fileByte, err := DownloadZip("./schoolreports.zip")
 
 		if err != nil {
 			if err != nil {
@@ -99,13 +152,13 @@ func SchoolReport() http.Handler {
 	})
 }
 
-func DownloadZip() ([]byte, error) {
+func DownloadZip(path string) ([]byte, error) {
 	r, w := io.Pipe()
 
 	defer r.Close()
 	defer w.Close()
 
-	zip, err := os.Stat("./schoolreports.zip")
+	zip, err := os.Stat(path)
 	if err != nil {
 		return nil, err
 	}

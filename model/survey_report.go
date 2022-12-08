@@ -2,6 +2,35 @@ package model
 
 import "time"
 
+type SurveyReportCSV struct {
+	StudentName     string    `db:"studentname"`
+	SchoolName      string    `db:"schoolname"`
+	S1Q1            string    `db:"s1q1"`
+	S1Q2            string    `db:"s1q2"`
+	S1Q3            string    `db:"s1q3"`
+	S1Q4            string    `db:"s1q4"`
+	S1Q5            string    `db:"s1q5"`
+	S1Q6            string    `db:"s1q6"`
+	S1Q7            string    `db:"s1q7"`
+	S2Q1            string    `db:"s2q1"`
+	S2Q2            string    `db:"s2q2"`
+	S2Q3            string    `db:"s2q3"`
+	S2Q4            string    `db:"s2q4"`
+	S2Q5            string    `db:"s2q5"`
+	S2Q6            string    `db:"s2q6"`
+	S2Q7            string    `db:"s2q7"`
+	S2Q8            string    `db:"s2q8"`
+	S2Q9            string    `db:"s2q9"`
+	LowerD          string    `db:"lower_d"`
+	LowerE          string    `db:"lower_e"`
+	LowerF          string    `db:"lower_f"`
+	UpperD          string    `db:"upper_d"`
+	UpperM          string    `db:"upper_m"`
+	UpperF          string    `db:"upper_f"`
+	SubjectiveScore string    `db:"subjective_score"`
+	DateOfSurvey    time.Time `db:"created_at"`
+}
+
 type SurveyReport struct {
 
 	// Preset values
