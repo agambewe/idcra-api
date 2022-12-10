@@ -156,7 +156,7 @@ func (s *ReportService) GenerateSurveyPDF(surveyID uuid.UUID) (reportData bytes.
 	return
 }
 
-func (s *ReportService) GenerateSurveyCSV(schoolId string) (err error) {
+func (s *ReportService) GenerateSurveyCSV(schoolId string, data *model.QuestionData) (err error) {
 	models := []model.SurveyReportCSV{}
 
 	reportSQL := `
@@ -193,10 +193,12 @@ func (s *ReportService) GenerateSurveyCSV(schoolId string) (err error) {
 	w := csv.NewWriter(f)
 	var dataTemp [][]string
 
+	var tmp = data.Questions
+
 	dataTemp = append(dataTemp, []string{
 		"student name",
-		"s1q1", "s1q2", "s1q3", "s1q4", "s1q5", "s1q6", "s1q7",
-		"s2q1", "s2q2", "s2q3", "s2q4", "s2q5", "s2q6", "s2q7", "s2q8", "s2q9",
+		tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6],
+		tmp[7], tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13], tmp[14], tmp[15],
 		"lower_d", "lower_e", "lower_f",
 		"upper_d", "upper_m", "upper_f",
 		"subjective score", "date of survey",
