@@ -2,10 +2,6 @@ package model
 
 import "time"
 
-type QuestionData struct {
-	Questions []string `json:"questions"`
-}
-
 type SurveyReportCSV struct {
 	StudentName     string    `db:"studentname"`
 	SchoolName      string    `db:"schoolname"`

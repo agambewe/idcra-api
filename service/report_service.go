@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -197,18 +198,28 @@ func (s *ReportService) GenerateSurveyCSV(schoolId string, data *model.QuestionD
 
 	dataTemp = append(dataTemp, []string{
 		"student name",
-		tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6],
-		tmp[7], tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13], tmp[14], tmp[15],
+		tmp[0].Question, tmp[1].Question, tmp[2].Question, tmp[3].Question, tmp[4].Question, tmp[5].Question, tmp[6].Question,
+		tmp[7].Question, tmp[8].Question, tmp[9].Question, tmp[10].Question, tmp[11].Question, tmp[12].Question, tmp[13].Question, tmp[14].Question, tmp[15].Question,
 		"lower_d", "lower_e", "lower_f",
 		"upper_d", "upper_m", "upper_f",
 		"subjective score", "date of survey",
 	})
 
 	for _, v := range models {
+
+		var tmp = data.Questions
+
 		dataTemp = append(dataTemp, []string{
 			v.StudentName,
-			v.S1Q1, v.S1Q2, v.S1Q3, v.S1Q4, v.S1Q5, v.S1Q6, v.S1Q7,
-			v.S2Q1, v.S2Q2, v.S2Q3, v.S2Q4, v.S2Q5, v.S2Q6, v.S2Q7, v.S2Q8, v.S2Q9,
+			convertKeyToAns(v.S1Q1, tmp[0].Answer), convertKeyToAns(v.S1Q2, tmp[1].Answer),
+			convertKeyToAns(v.S1Q3, tmp[2].Answer), convertKeyToAns(v.S1Q4, tmp[3].Answer),
+			convertKeyToAns(v.S1Q5, tmp[4].Answer), convertKeyToAns(v.S1Q6, tmp[5].Answer),
+			convertKeyToAns(v.S1Q7, tmp[6].Answer),
+			convertKeyToAns(v.S2Q1, tmp[7].Answer), convertKeyToAns(v.S2Q2, tmp[8].Answer),
+			convertKeyToAns(v.S2Q3, tmp[9].Answer), convertKeyToAns(v.S2Q4, tmp[10].Answer),
+			convertKeyToAns(v.S2Q5, tmp[11].Answer), convertKeyToAns(v.S2Q6, tmp[12].Answer),
+			convertKeyToAns(v.S2Q7, tmp[13].Answer), convertKeyToAns(v.S2Q8, tmp[14].Answer),
+			convertKeyToAns(v.S2Q9, tmp[15].Answer),
 			v.LowerD, v.LowerE, v.LowerF,
 			v.UpperD, v.UpperM, v.UpperF,
 			v.SubjectiveScore, v.DateOfSurvey.Format("2006-01-02 15:04:05"),
@@ -222,6 +233,18 @@ func (s *ReportService) GenerateSurveyCSV(schoolId string, data *model.QuestionD
 
 	err = zipSource("./tmp/", "surveyreports.zip")
 	return err
+}
+
+func convertKeyToAns(key string, answer model.Answer) string {
+	if strings.ToLower(key) == "low" {
+		return *answer.Low
+	} else if strings.ToLower(key) == "medium" {
+		return *answer.Medium
+	} else if strings.ToLower(key) == "high" {
+		return *answer.High
+	} else {
+		return ""
+	}
 }
 
 func getReport(reportModel model.SurveyReport) (reportData bytes.Buffer, err error) {
