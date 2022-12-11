@@ -51,13 +51,14 @@ func SurveyReport() http.Handler {
 func SurveyReportSchool() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// w.Header().Set("Content-type", "application/octet-stream")
-		w.Header().Set("Content-type", "application/zip")
 
 		ctx := r.Context()
 		idString := strings.TrimPrefix(r.URL.Path, "/reports/surveys/school/")
 
 		if r.Method == http.MethodPost {
-			fmt.Println("POST")
+			w.Header().Set("Content-type", "application/json")
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+
 			os.RemoveAll("./tmp/")
 			os.MkdirAll("./tmp/", os.ModePerm)
 			os.Remove("surveyreports.zip")
@@ -84,6 +85,8 @@ func SurveyReportSchool() http.Handler {
 			return
 
 		} else {
+
+			w.Header().Set("Content-type", "application/zip")
 
 			school, err := ctx.Value("schoolService").(*service.SchoolService).FindByID(idString)
 			if err != nil {
