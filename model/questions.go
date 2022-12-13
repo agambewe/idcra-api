@@ -2,6 +2,7 @@ package model
 
 type QuestionData struct {
 	Questions []Question `json:"questions"`
+	SchoolId  string     `json:"school_id"`
 }
 
 type Question struct {

@@ -53,7 +53,6 @@ func SurveyReportSchool() http.Handler {
 		// w.Header().Set("Content-type", "application/octet-stream")
 
 		ctx := r.Context()
-		idString := strings.TrimPrefix(r.URL.Path, "/reports/surveys/school/")
 
 		if r.Method == http.MethodPost {
 			w.Header().Set("Content-type", "application/json")
@@ -66,7 +65,7 @@ func SurveyReportSchool() http.Handler {
 			var data model.QuestionData
 			json.NewDecoder(r.Body).Decode(&data)
 
-			err := ctx.Value("reportService").(*service.ReportService).GenerateSurveyCSV(idString, &data)
+			err := ctx.Value("reportService").(*service.ReportService).GenerateSurveyCSV(data.SchoolId, &data)
 
 			if err != nil {
 				response := &model.Response{
@@ -85,6 +84,7 @@ func SurveyReportSchool() http.Handler {
 			return
 
 		} else {
+			idString := strings.TrimPrefix(r.URL.Path, "/reports/surveys/school/")
 
 			w.Header().Set("Content-type", "application/zip")
 

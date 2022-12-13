@@ -162,7 +162,7 @@ func (s *ReportService) GenerateSurveyCSV(schoolId string, data *model.QuestionD
 
 	reportSQL := `
 		select
-			student.name studentname, school.name schoolname,
+			student.name studentname, school.name schoolname, student.date_of_birth,
 			s.s1q1,s.s1q2,s.s1q3,s.s1q4,s.s1q5,s.s1q6,s.s1q7,
 			s.s2q1,s.s2q2,s.s2q3,s.s2q4,s.s2q5,s.s2q6,s.s2q6,s.s2q7,s.s2q8,s.s2q9,
 			s.lower_d,s.lower_e,s.lower_f,
@@ -197,7 +197,7 @@ func (s *ReportService) GenerateSurveyCSV(schoolId string, data *model.QuestionD
 	var tmp = data.Questions
 
 	dataTemp = append(dataTemp, []string{
-		"student name",
+		"student name", "date of birth",
 		tmp[0].Question, tmp[1].Question, tmp[2].Question, tmp[3].Question, tmp[4].Question, tmp[5].Question, tmp[6].Question,
 		tmp[7].Question, tmp[8].Question, tmp[9].Question, tmp[10].Question, tmp[11].Question, tmp[12].Question, tmp[13].Question, tmp[14].Question, tmp[15].Question,
 		"lower_d", "lower_e", "lower_f",
@@ -210,7 +210,7 @@ func (s *ReportService) GenerateSurveyCSV(schoolId string, data *model.QuestionD
 		var tmp = data.Questions
 
 		dataTemp = append(dataTemp, []string{
-			v.StudentName,
+			v.StudentName, v.BirthDate.Format("2006-01-02"),
 			convertKeyToAns(v.S1Q1, tmp[0].Answer), convertKeyToAns(v.S1Q2, tmp[1].Answer),
 			convertKeyToAns(v.S1Q3, tmp[2].Answer), convertKeyToAns(v.S1Q4, tmp[3].Answer),
 			convertKeyToAns(v.S1Q5, tmp[4].Answer), convertKeyToAns(v.S1Q6, tmp[5].Answer),

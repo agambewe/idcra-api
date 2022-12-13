@@ -5,6 +5,7 @@ import "time"
 type SurveyReportCSV struct {
 	StudentName     string    `db:"studentname"`
 	SchoolName      string    `db:"schoolname"`
+	BirthDate       time.Time `db:"date_of_birth"`
 	S1Q1            string    `db:"s1q1"`
 	S1Q2            string    `db:"s1q2"`
 	S1Q3            string    `db:"s1q3"`
