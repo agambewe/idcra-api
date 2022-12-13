@@ -83,7 +83,7 @@ func SurveyReportSchool() http.Handler {
 			writeResponse(w, response, response.Code)
 			return
 
-		} else {
+		} else if r.Method == http.MethodGet {
 			idString := strings.TrimPrefix(r.URL.Path, "/reports/surveys/school/")
 
 			w.Header().Set("Content-type", "application/zip")
@@ -119,6 +119,13 @@ func SurveyReportSchool() http.Handler {
 			os.RemoveAll("./tmp/")
 			os.MkdirAll("./tmp/", os.ModePerm)
 			os.Remove("surveyreports.zip")
+		} else if r.Method == http.MethodOptions {
+			response := &model.Response{
+				Code: http.StatusOK,
+			}
+
+			writeResponse(w, response, response.Code)
+			return
 		}
 	})
 }
